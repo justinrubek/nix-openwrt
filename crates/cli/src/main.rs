@@ -1,11 +1,14 @@
-use crate::{
-    commands::{Commands, HelloCommands},
-    error::Result,
-};
+use crate::{commands::Commands, error::Result};
 use clap::Parser;
 
 mod commands;
 mod error;
+
+#[derive(Clone, Debug, serde::Deserialize)]
+pub struct UciSettings {
+    pub settings: serde_json::Value,
+    pub secrets: serde_json::Value,
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -13,16 +16,10 @@ async fn main() -> Result<()> {
 
     let args = commands::Args::parse();
     match args.command {
-        Commands::Hello(hello) => {
-            let cmd = hello.command;
-            match cmd {
-                HelloCommands::World => {
-                    println!("Hello, world!");
-                }
-                HelloCommands::Name { name } => {
-                    println!("Hello, {}!", name);
-                }
-            }
+        Commands::Generate(generate) => {
+            let file_content = tokio::fs::read_to_string(generate.file).await?;
+            let json = serde_json::from_str::<UciSettings>(&file_content)?;
+            println!("{:?}", json);
         }
     }
 
